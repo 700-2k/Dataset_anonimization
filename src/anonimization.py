@@ -94,6 +94,17 @@ def anonymize_direct_identifiers(table: pd.DataFrame) -> pd.DataFrame:
 
 
 # ============================================
+# 🧪 Testing
+# ============================================
+
+
+def get_anonymized_columns(table: pd.DataFrame, quasi_ids: list) -> tuple:
+    unique_columns_table = table[quasi_ids].drop_duplicates()
+    count_unique_columns = len(unique_columns_table)
+    return (unique_columns_table, count_unique_columns)
+
+
+# ============================================
 # ▶️ Main
 # ============================================
 
@@ -113,5 +124,9 @@ if __name__ == "__main__":
     table = anonymize_column(table, "store_name")
 
     table = anonymize_column(table, "coordinates")
+
+    quasi_ids = ["store_name", "coordinates"]
+
+    table, count_unique = get_anonymized_columns(table, quasi_ids)
 
     export_output(table, out_path)
