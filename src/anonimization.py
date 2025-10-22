@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+from datetime import datetime
 
 
 # ============================================
@@ -43,7 +44,15 @@ def anonymize_card_number(card: str) -> str:
     return card
 
 
-methods = {"cards_number": anonymize_card_number}
+def anonymize_date_time(date_time: str) -> datetime:
+    date_time = datetime.fromisoformat(date_time)
+    start_hour = (date_time.hour // 4) * 4
+    end_hour = start_hour + 4
+
+    return f"{date_time.date()}T{start_hour:02d}:00-{end_hour:02d}:00"
+
+
+methods = {"cards_number": anonymize_card_number, "date-time": anonymize_date_time}
 
 
 # ============================================
@@ -58,6 +67,7 @@ def anonymize_column(table: pd.DataFrame, column: str) -> pd.DataFrame:
 
 def anonymize_direct_identifiers(table: pd.DataFrame) -> pd.DataFrame:
     table = anonymize_column(table, "cards_number")
+
     table = table.drop("receipt_id", axis=1)
     return table
 
@@ -71,5 +81,7 @@ if __name__ == "__main__":
     table = table_validate(table)
 
     table = anonymize_direct_identifiers(table)
+
+    table = anonymize_column(table, "date-time")
 
     export_output(table, out_path)
