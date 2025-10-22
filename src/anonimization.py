@@ -67,22 +67,22 @@ def anonymize_coords(coords: str) -> str:
 
 def anonymize_total_cost(cost: int) -> str:
     match cost:
-        case n if 0 <= n <= 500:
-            return "<=500"
-        case n if 500 < n <= 1000:
-            return "500-1000"
-        case n if 1000 < n <= 2000:
-            return "1000-2000"
-        case n if 2000 < n <= 5000:
-            return "2000-5000"
-        case n if 5000 < n <= 10000:
-            return "5000-10000"
-        case n if 10000 < n <= 30000:
-            return "10000-30000"
-        case n if 30000 < n <= 50000:
-            return "30000-50000"
-        case n if 50000 < n <= 100000:
-            return "50000-100000"
+        case n if 0 <= n <= 1000:
+            return "<=1000"
+        # case n if 500 < n <= 1000:
+        #     return "500-1000"
+        # case n if 1000 < n <= 5000:
+        #     return "1000-5000"
+        # case n if 2000 < n <= 5000:
+        #     return "2000-5000"
+        case n if 1000 < n <= 10000:
+            return "1000-10000"
+        # case n if 10000 < n <= 50000:
+        #     return "10000-50000"
+        # case n if 30000 < n <= 50000:
+        #     return "30000-50000"
+        case n if 10000 < n <= 100000:
+            return "10000-100000"
         case n if n > 100000:
             return "100000+"
 
@@ -125,11 +125,6 @@ def anonymize_direct_identifiers(table: pd.DataFrame) -> pd.DataFrame:
     return table
 
 
-# ============================================
-# 🚹 User Interface
-# ============================================
-
-
 def get_k_anonymity(table: pd.DataFrame, quasi_ids: list[str]) -> tuple:
     # count k
     grouped = table.groupby(quasi_ids).size().rename("group_size").reset_index()
@@ -158,6 +153,23 @@ def get_k_anonymity(table: pd.DataFrame, quasi_ids: list[str]) -> tuple:
             break
 
     return (f"{fraction_good:.2f}%", f"{k}", bad_group_list)
+
+
+# ============================================
+# 🚹 User Interface
+# ============================================
+
+
+def print_result(fraction: str, k_anonymity: int, bad_k: list):
+    print(f"Приемлемое значение K-Anonymity для данного датасета: k = {k_anonymity}")
+    print(f"Процент строк с k >= {k_anonymity}: {fraction}")
+    if len(bad_k) > 0:
+        print("Плохие K-Anonymity и их процент в датасете:")
+        print("  K-Anonymity  |  Процент  ")
+        for k in bad_k:
+            print(f"       {k[0]}       |   {k[1]}   ")
+    else:
+        print("Нет плохих K-Anonymity")
 
 
 # ============================================
@@ -202,12 +214,4 @@ if __name__ == "__main__":
 
     fraction, k_anonymity, bad_k = get_k_anonymity(table, quasi_ids)
 
-    print(f"Приемлемое значение K-Anonymity для данного датасета: k = {k_anonymity}")
-    print(f"Процент строк с k >= {k_anonymity}: {fraction}")
-    if len(bad_k) > 0:
-        print("Плохие K-Anonymity и их процент в датасете:")
-        print("  K-Anonymity  |  Процент  ")
-        for k in bad_k:
-            print(f"       {k[0]}       |   {k[1]}   ")
-    else:
-        print("Нет плохих K-Anonymity")
+    print_result(fraction, k_anonymity, bad_k)
