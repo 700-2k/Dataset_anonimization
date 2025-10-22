@@ -3,6 +3,9 @@ from pathlib import Path
 from datetime import datetime
 
 
+import dictionaries as dicts
+
+
 # ============================================
 # 📦 Data loading
 # ============================================
@@ -52,7 +55,25 @@ def anonymize_date_time(date_time: str) -> datetime:
     return f"{date_time.date()}T{start_hour:02d}:00-{end_hour:02d}:00"
 
 
-methods = {"cards_number": anonymize_card_number, "date-time": anonymize_date_time}
+def anonymize_store(store: str) -> str:
+    store = dicts.anonymized_stores[store]
+    return store
+
+
+def anonymize_coords(coords: str) -> str:
+    coords = coords.split(",")
+    lon = f"{float(coords[0]):.2f}"
+    lat = f"{float(coords[1]):.2f}"
+    rounded_coords = lon + "," + lat
+    return rounded_coords
+
+
+methods = {
+    "cards_number": anonymize_card_number,
+    "date-time": anonymize_date_time,
+    "store_name": anonymize_store,
+    "coordinates": anonymize_coords,
+}
 
 
 # ============================================
@@ -72,6 +93,11 @@ def anonymize_direct_identifiers(table: pd.DataFrame) -> pd.DataFrame:
     return table
 
 
+# ============================================
+# ▶️ Main
+# ============================================
+
+
 if __name__ == "__main__":
     data_path = "C:\\Users\\VLAD\\prog\\Dataset_anonimization\\data\\table.xlsx"
     out_path = "C:\\Users\\VLAD\\prog\\Dataset_anonimization\\output\\example.xlsx"
@@ -83,5 +109,9 @@ if __name__ == "__main__":
     table = anonymize_direct_identifiers(table)
 
     table = anonymize_column(table, "date-time")
+
+    table = anonymize_column(table, "store_name")
+
+    table = anonymize_column(table, "coordinates")
 
     export_output(table, out_path)
