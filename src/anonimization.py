@@ -89,12 +89,18 @@ def anonymize_direct_identifiers(table: pd.DataFrame) -> pd.DataFrame:
     return table
 
 
+def get_k_anonymity(table: pd.DataFrame, quasi_ids: list[str]) -> int:
+    grouped = table.groupby(quasi_ids).size()
+    k = grouped.min()
+    return k
+
+
 # ============================================
 # 🧪 Testing
 # ============================================
 
 
-def get_anonymized_columns(table: pd.DataFrame, quasi_ids: list) -> tuple:
+def get_anonymized_columns(table: pd.DataFrame, quasi_ids: list[str]) -> tuple:
     unique_columns_table = table[quasi_ids].drop_duplicates()
     count_unique_columns = len(unique_columns_table)
     return (unique_columns_table, count_unique_columns)
@@ -121,8 +127,10 @@ if __name__ == "__main__":
 
     table = anonymize_column(table, "coordinates")
 
-    quasi_ids = ["store_name", "coordinates"]
+    quasi_ids = ["store_name", "coordinates", "date-time"]
 
-    table, count_unique = get_anonymized_columns(table, quasi_ids)
+    filtred_table, count_unique = get_anonymized_columns(table, quasi_ids)
 
-    export_output(table, out_path)
+    export_output(filtred_table, out_path)
+
+    print(get_k_anonymity(table, quasi_ids))
