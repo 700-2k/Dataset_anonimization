@@ -61,11 +61,7 @@ def anonymize_store(store: str) -> str:
 
 
 def anonymize_coords(coords: str) -> str:
-    coords = coords.split(",")
-    lon = f"{float(coords[0]):.2f}"
-    lat = f"{float(coords[1]):.2f}"
-    rounded_coords = lon + "," + lat
-    return rounded_coords
+    return dicts.districts[coords]
 
 
 methods = {
