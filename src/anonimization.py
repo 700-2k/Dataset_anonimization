@@ -18,12 +18,23 @@ def Load_table(path: str) -> pd.DataFrame:
 
 
 # ============================================
-# ✅ Data validation
+# ✅ Data validation and rules
 # ============================================
 
 
 def table_validate(table: pd.DataFrame) -> pd.DataFrame:
     table["cards_number"] = table["cards_number"].astype(str)
+    return table
+
+
+def correct_output(table: pd.DataFrame) -> pd.DataFrame:
+    table = table.rename(
+        {
+            "store_name": "store",
+            "date-time": "year-month",
+            "coordinates": "district",
+        }
+    )
     return table
 
 
@@ -43,7 +54,7 @@ def export_output(table: pd.DataFrame, path: str):
 
 
 def anonymize_card_number(card: str) -> str:
-    card = "************" + str(card)[12:16]
+    card = str(card)[0:4] + "************"
     return card
 
 
@@ -67,24 +78,68 @@ def anonymize_coords(coords: str) -> str:
 
 def anonymize_total_cost(cost: int) -> str:
     match cost:
-        case n if 0 <= n <= 1000:
-            return "<=1000"
-        # case n if 500 < n <= 1000:
-        #     return "500-1000"
-        # case n if 1000 < n <= 5000:
-        #     return "1000-5000"
-        # case n if 2000 < n <= 5000:
-        #     return "2000-5000"
-        case n if 1000 < n <= 10000:
-            return "1000-10000"
-        # case n if 10000 < n <= 50000:
-        #     return "10000-50000"
-        # case n if 30000 < n <= 50000:
-        #     return "30000-50000"
-        case n if 10000 < n <= 100000:
-            return "10000-100000"
+        case n if 0 <= n <= 500:
+            return "<=500"
+        case n if 500 < n <= 1000:
+            return "500-1000"
+        case n if 1000 < n <= 2000:
+            return "1000-2000"
+        case n if 2000 < n <= 5000:
+            return "2000-5000"
+        case n if 5000 < n <= 10000:
+            return "5000-10000"
+        case n if 10000 < n <= 30000:
+            return "10000-30000"
+        case n if 30000 < n <= 50000:
+            return "30000-50000"
+        case n if 50000 < n <= 100000:
+            return "50000-100000"
         case n if n > 100000:
             return "100000+"
+
+
+def anonymize_num_products(num: int) -> str:
+    match num:
+        case 1:
+            return "1"
+        case n if 2 <= n <= 3:
+            return "2-3"
+        case n if 4 <= n <= 6:
+            return "4-6"
+        case n if n > 6:
+            return "6+"
+
+
+def anonymize_price(price: int) -> str:
+    match price:
+        case n if 0 <= n <= 500:
+            return "<=500"
+        case n if 500 < n <= 1000:
+            return "500-1000"
+        case n if 1000 < n <= 2000:
+            return "1000-2000"
+        case n if 2000 < n <= 5000:
+            return "2000-5000"
+        case n if 5000 < n <= 10000:
+            return "5000-10000"
+        case n if 10000 < n <= 30000:
+            return "10000-30000"
+        case n if 30000 < n <= 50000:
+            return "30000-50000"
+        case n if 50000 < n <= 100000:
+            return "50000-100000"
+        case n if n > 100000:
+            return "100000+"
+
+
+def anonymize_categories(cat: str) -> str:
+    cat = dicts.categories[cat]
+    return cat
+
+
+def anonymize_brand(brand: str) -> str:
+    brand = dicts.brands[brand]
+    return brand
 
 
 methods = {
@@ -93,6 +148,10 @@ methods = {
     "store_name": anonymize_store,
     "coordinates": anonymize_coords,
     "total_cost": anonymize_total_cost,
+    "number_of_products": anonymize_num_products,
+    "price": anonymize_price,
+    "categories": anonymize_categories,
+    "brands": anonymize_brand,
 }
 
 
@@ -130,8 +189,7 @@ def get_k_anonymity(table: pd.DataFrame, quasi_ids: list[str]) -> tuple:
     grouped = table.groupby(quasi_ids).size().rename("group_size").reset_index()
 
     # lowest good k-anonymity
-    # k = get_good_k(table)
-    k = 7
+    k = get_good_k(table)
 
     # add sizes of groups to table
     table_with_sizes = table.merge(grouped, on=quasi_ids, how="left")
@@ -155,6 +213,28 @@ def get_k_anonymity(table: pd.DataFrame, quasi_ids: list[str]) -> tuple:
     return (f"{fraction_good:.2f}%", f"{k}", bad_group_list)
 
 
+def full_anonymization(table: pd.DataFrame) -> pd.DataFrame:
+    table = anonymize_direct_identifiers(table)
+
+    table = anonymize_column(table, "date-time")
+
+    table = anonymize_column(table, "store_name")
+
+    table = anonymize_column(table, "coordinates")
+
+    table = anonymize_column(table, "total_cost")
+
+    table = anonymize_column(table, "number_of_products")
+
+    table = anonymize_column(table, "price")
+
+    table = anonymize_column(table, "categories")
+
+    table = anonymize_column(table, "brands")
+
+    return table
+
+
 # ============================================
 # 🚹 User Interface
 # ============================================
@@ -170,6 +250,51 @@ def print_result(fraction: str, k_anonymity: int, bad_k: list):
             print(f"       {k[0]}       |   {k[1]}   ")
     else:
         print("Нет плохих K-Anonymity")
+
+
+def get_quasis(keys: str) -> list:
+    key_dict = {
+        "1": "store_name",
+        "2": "date-time",
+        "3": "coordinates",
+        "4": "categories",
+        "5": "brands",
+        "6": "price",
+        "7": "cards_number",
+        "8": "number_of_products",
+        "9": "total_cost",
+    }
+    keys = keys.split()
+    result = []
+    for key in keys:
+        result.append(key_dict[key])
+    return result
+
+
+def user_interface(table: pd.DataFrame):
+    print("Укажите квази-идентификаторы по их номеру через пробел:")
+    print(
+        "1: store_name\n"
+        "2: date-time\n"
+        "3: coordinates\n"
+        "4: categories\n"
+        "5: brands\n"
+        "6: price\n"
+        "7: cards_number\n"
+        "8: number_of_products\n"
+        "9: total_cost\n"
+    )
+    keys = input()
+    quasi_ids = get_quasis(keys)
+
+    fraction, k_anonymity, bad_k = get_k_anonymity(table, quasi_ids)
+
+    print_result(fraction, k_anonymity, bad_k)
+
+    print("Количесвто уникальных по заданным квази-идентификаторам:")
+
+    count = table.groupby(quasi_ids).ngroups
+    print(count)
 
 
 # ============================================
@@ -196,22 +321,8 @@ if __name__ == "__main__":
 
     table = table_validate(table)
 
-    table = anonymize_direct_identifiers(table)
+    table = full_anonymization(table)
 
-    table = anonymize_column(table, "date-time")
+    export_output(table, out_path)
 
-    table = anonymize_column(table, "store_name")
-
-    table = anonymize_column(table, "coordinates")
-
-    table = anonymize_column(table, "total_cost")
-
-    quasi_ids = ["store_name", "coordinates", "date-time", "total_cost"]
-
-    filtred_table, count_unique = get_anonymized_columns(table, quasi_ids)
-
-    export_output(filtred_table, out_path)
-
-    fraction, k_anonymity, bad_k = get_k_anonymity(table, quasi_ids)
-
-    print_result(fraction, k_anonymity, bad_k)
+    user_interface(table)
