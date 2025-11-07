@@ -35,6 +35,7 @@ REM === Запускаем скрипт ===
 echo [INFO] Запуск src\anonimization.py...
 python src\anonimization.py
 
+
+
 REM === Завершаем работу ===
-deactivate
 pause
